@@ -20,7 +20,7 @@ self.onmessage = function (event) {
 
     self.postMessage({ type: 'progress', message: 'Finding optimal assignments...', percent: 98 });
     
-    // The new hungarian function handles padding internally.
+    // The new library handles rectangular matrices correctly by design.
     const assignments = hungarian(costMatrix);
     
     self.postMessage({ type: 'complete', assignments: assignments });
