@@ -4,8 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Optimal Match</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+        section { margin-bottom: 2rem; border: 1px solid #ddd; padding: 1.5rem; border-radius: 5px; }
+        .column-tag { cursor: pointer; padding: 5px 10px; margin: 5px; border-radius: 15px; display: inline-block; border: 1px solid #ccc; user-select: none; }
+        .tag-selected { background-color: #007bff; color: white; border-color: #007bff; }
+        .tag-deselected { background-color: #f1f1f1; }
+    </style>
 </head>
-<body>
+<body x-data="app()">
     <header>
         <h1>Optimal Match Finder</h1>
         <p>Find the best replacements for missing items in your sample.</p>
@@ -16,17 +23,28 @@
             <h2>1. Upload Your Data</h2>
             <div>
                 <label for="primary-file">Primary/Missing File (CSV)</label>
-                <input type="file" id="primary-file" accept=".csv">
+                <input type="file" id="primary-file" @change="handleFileUpload($event, 'primary')">
             </div>
             <div>
                 <label for="reserve-file">Reserve/Pool File (CSV)</label>
-                <input type="file" id="reserve-file" accept=".csv">
+                <input type="file" id="reserve-file" @change="handleFileUpload($event, 'reserve')">
             </div>
         </section>
 
-        <section id="column-config-section">
+        <section id="column-config-section" x-show="headers.length > 0">
             <h2>2. Configure Matching Columns</h2>
-            </section>
+            <p>Click a column to include or exclude it from the matching process.</p>
+            <div>
+                <template x-for="header in headers" :key="header">
+                    <span 
+                        class="column-tag"
+                        :class="selected[header] ? 'tag-selected' : 'tag-deselected'"
+                        @click="toggleSelection(header)"
+                        x-text="header">
+                    </span>
+                </template>
+            </div>
+        </section>
 
         <button id="run-button">Find Matches</button>
 
@@ -34,9 +52,9 @@
             <h2>3. Results</h2>
             </section>
     </main>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
-    <script type="module" src="src/ui.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="src/ui.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>
