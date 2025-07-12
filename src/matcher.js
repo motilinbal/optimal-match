@@ -1,7 +1,7 @@
 // src/matcher.js
 
 import { gowerMatrix } from './gower.js';
-import { hungarian } from './lib/hungarian.js'; // Import the new library
+import { munkres } from './lib/munkres.js';
 
 /**
  * Finds the optimal one-to-one assignments between two datasets.
@@ -17,19 +17,6 @@ export function findOptimalAssignments(dataX, dataY, config) {
         return [];
     }
 
-    // Pad the matrix to be square if it's not, as this implementation requires it.
-    const R = costMatrix.length;
-    const C = costMatrix[0].length;
-    if (R !== C) {
-        const dim = Math.max(R, C);
-        let paddedMatrix = Array.from({ length: dim }, () => new Array(dim).fill(Infinity));
-        for (let i = 0; i < R; i++) {
-            for (let j = 0; j < C; j++) {
-                paddedMatrix[i][j] = costMatrix[i][j];
-            }
-        }
-        return hungarian(paddedMatrix).filter(a => a[0] < R && a[1] < C);
-    }
-    
-    return hungarian(costMatrix);
+    // The correctly bundled library handles non-square matrices automatically.
+    return munkres(costMatrix);
 }

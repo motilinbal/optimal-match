@@ -7,7 +7,7 @@
  * @param {boolean[]} config.isCategorical - A boolean array indicating if the feature at the corresponding index is categorical.
  * @returns {number[][]} A 2D array (matrix) of Gower distances.
  */
-export function gowerMatrix(dataX, dataY, config) {
+export function gowerMatrix(dataX, dataY, config, onProgress) {
     if (!dataX.length || !dataY.length) {
         return [[]];
     }
@@ -20,7 +20,9 @@ export function gowerMatrix(dataX, dataY, config) {
         if (isCategorical[i]) {
             return null; // No range for categorical features.
         }
-        const values = allData.map(d => d[feature]);
+        // CORRECTED: Convert all values to numbers and filter out any NaNs.
+        const values = allData.map(d => parseFloat(d[feature])).filter(v => !isNaN(v));
+        if (values.length === 0) return 0; // Handle case where all values are non-numeric
         const max = Math.max(...values);
         const min = Math.min(...values);
         return max - min;
@@ -42,14 +44,20 @@ export function gowerMatrix(dataX, dataY, config) {
 
                 if (isCategorical[k]) {
                     // Categorical similarity is 1 if equal, 0 otherwise.
-                    similarity = (recordX[feature] === recordY[feature]) ? 1 : 0;
+                    similarity = (recordX[feature] == recordY[feature]) ? 1 : 0;
                 } else {
                     const range = ranges[k];
-                    // Handle the case where the range is 0 (all values are the same).
-                    if (range === 0) {
+                    // CORRECTED: Convert record values to numbers for comparison.
+                    const valX = parseFloat(recordX[feature]);
+                    const valY = parseFloat(recordY[feature]);
+
+                    // If values are not numbers, they have 0 similarity.
+                    if (isNaN(valX) || isNaN(valY)) {
+                        similarity = 0;
+                    } else if (range === 0) {
                         similarity = 1;
                     } else {
-                        const diff = Math.abs(recordX[feature] - recordY[feature]);
+                        const diff = Math.abs(valX - valY);
                         similarity = 1 - (diff / range);
                     }
                 }
@@ -59,6 +67,12 @@ export function gowerMatrix(dataX, dataY, config) {
             // Step 4: Calculate final distance for the pair.
             const averageSimilarity = totalSimilarity / features.length;
             distanceMatrix[i][j] = 1 - averageSimilarity;
+        }
+
+        // Report progress after each row of the primary data is processed
+        if (onProgress && (i % 5 === 0 || i === dataX.length - 1)) {
+            const percent = Math.round(((i + 1) / dataX.length) * 95); // Gower is ~95% of the work
+            onProgress(percent);
         }
     }
 

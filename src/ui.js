@@ -12,11 +12,15 @@ function app() {
         isCategorical: {},
         isLoading: false, // For the loading indicator
         results: null, // To store the final results
+        progressMessage: '', // New state for progress
+        progressPercent: 0,  // New state for progress
 
         // --- Methods ---
         runMatch() {
             this.isLoading = true;
             this.results = null;
+            this.progressMessage = 'Preparing calculation...';
+            this.progressPercent = 0;
             console.log('UI: Starting match process...');
 
             const config = {
@@ -29,11 +33,19 @@ function app() {
             const worker = new Worker('src/worker.js', { type: 'module' });
 
             worker.onmessage = (event) => {
-                console.log('UI: Message received from worker.');
-                this.results = event.data.assignments;
-                this.isLoading = false;
-                worker.terminate();
-                console.log('Final Assignments:', this.results);
+                const { type, message, percent, assignments } = event.data;
+
+                if (type === 'progress') {
+                    // Update progress state
+                    this.progressMessage = message;
+                    this.progressPercent = percent;
+                } else if (type === 'complete') {
+                    // Final result received
+                    this.results = assignments;
+                    this.isLoading = false;
+                    worker.terminate();
+                    console.log('Final Assignments:', this.results);
+                }
             };
 
             // FIX: Create plain copies of the data to remove the Alpine Proxy wrapper.
