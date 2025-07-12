@@ -8,7 +8,8 @@ function app() {
         headers: [],
         primaryHeaders: null,
         reserveHeaders: null,
-        selected: {}, // Object to track selected state of each header
+        selected: {}, 
+        isCategorical: {}, // New state for categorical toggles
 
         // --- Methods ---
         toggleSelection(header) {
@@ -46,23 +47,37 @@ function app() {
             });
         },
 
+        isLikelyCategorical(header) {
+            // Smart detection: check the first few rows of the primary data.
+            // If a value is not a number, we assume the column is categorical.
+            for (let i = 0; i < Math.min(5, this.primaryData.length); i++) {
+                const value = this.primaryData[i][header];
+                if (value && isNaN(parseFloat(value))) {
+                    return true;
+                }
+            }
+            return false;
+        },
+
         validateHeaders() {
             if (this.primaryHeaders.length !== this.reserveHeaders.length || 
                 !this.primaryHeaders.every(h => this.reserveHeaders.includes(h))) {
                 
                 alert('Header mismatch: The column names in the two files do not match.');
-                this.headers = []; // Clear headers on mismatch
+                this.headers = [];
                 return;
             }
 
             console.log('Headers validated successfully!');
             this.headers = this.primaryHeaders;
             
-            // Initialize the 'selected' state: all columns are selected by default
-            this.selected = this.headers.reduce((acc, header) => {
-                acc[header] = true;
-                return acc;
-            }, {});
+            // Initialize the state for both selections and categorical toggles
+            this.selected = {};
+            this.isCategorical = {};
+            this.headers.forEach(header => {
+                this.selected[header] = true; // Select all by default
+                this.isCategorical[header] = this.isLikelyCategorical(header); // Auto-detect type
+            });
         }
     };
 }

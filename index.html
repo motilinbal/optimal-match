@@ -7,9 +7,11 @@
     <style>
         body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
         section { margin-bottom: 2rem; border: 1px solid #ddd; padding: 1.5rem; border-radius: 5px; }
-        .column-tag { cursor: pointer; padding: 5px 10px; margin: 5px; border-radius: 15px; display: inline-block; border: 1px solid #ccc; user-select: none; }
+        .column-container { display: inline-flex; flex-direction: column; align-items: center; margin: 10px; padding: 10px; border: 1px solid #eee; border-radius: 8px; }
+        .column-tag { cursor: pointer; padding: 5px 10px; border-radius: 15px; user-select: none; width: 100%; text-align: center; }
         .tag-selected { background-color: #007bff; color: white; border-color: #007bff; }
         .tag-deselected { background-color: #f1f1f1; }
+        .toggle-label { margin-top: 8px; font-size: 0.8em; }
     </style>
 </head>
 <body x-data="app()">
@@ -33,19 +35,24 @@
 
         <section id="column-config-section" x-show="headers.length > 0">
             <h2>2. Configure Matching Columns</h2>
-            <p>Click a column to include or exclude it from the matching process.</p>
+            <p>Select columns to include and specify which are categorical.</p>
             <div>
                 <template x-for="header in headers" :key="header">
-                    <span 
-                        class="column-tag"
-                        :class="selected[header] ? 'tag-selected' : 'tag-deselected'"
-                        @click="toggleSelection(header)"
-                        x-text="header">
-                    </span>
+                    <div class="column-container">
+                        <span 
+                            class="column-tag"
+                            :class="selected[header] ? 'tag-selected' : 'tag-deselected'"
+                            @click="toggleSelection(header)"
+                            x-text="header">
+                        </span>
+                        <label class="toggle-label">
+                            <input type="checkbox" x-model="isCategorical[header]">
+                            Categorical
+                        </label>
+                    </div>
                 </template>
             </div>
         </section>
-
         <button id="run-button">Find Matches</button>
 
         <section id="results-section">
