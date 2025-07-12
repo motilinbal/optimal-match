@@ -142,8 +142,9 @@ function munkres(matrix) {
           j2 = ind[j];
           if (j2 < 0) {
             l = j;
+            let i1;
             do {
-              const i1 = p[l];
+              i1 = p[l];
               ind[l] = i1;
               const j1 = l;
               l = ind[i1];
