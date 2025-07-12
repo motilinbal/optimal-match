@@ -12,6 +12,9 @@
         .tag-selected { background-color: #007bff; color: white; border-color: #007bff; }
         .tag-deselected { background-color: #f1f1f1; }
         .toggle-label { margin-top: 8px; font-size: 0.8em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; font-weight: bold; }
     </style>
 </head>
 <body x-data="app()">
@@ -53,11 +56,41 @@
                 </template>
             </div>
         </section>
-        <button id="run-button">Find Matches</button>
+        <button id="run-button" @click="runMatch()" :disabled="isLoading">
+            <span x-show="!isLoading">Find Matches</span>
+            <span x-show="isLoading">Calculating...</span>
+        </button>
 
         <section id="results-section">
             <h2>3. Results</h2>
-            </section>
+            
+            <template x-if="results && primaryData && reserveData">
+                <div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Primary ID</th>
+                                <th>Matched Reserve ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="match in results" :key="match[0]">
+                                <tr>
+                                    <td x-text="primaryData[match[0]].class_id"></td>
+                                    <td x-text="reserveData[match[1]].class_id"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </template>
+            
+            <p x-show="results && results.length === 0">No matches could be found.</p>
+        </section>
+
+        <button x-show="results && results.length > 0" @click="exportResults()">
+            Download Results as CSV
+        </button>
     </main>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
