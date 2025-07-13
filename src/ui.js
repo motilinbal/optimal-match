@@ -135,12 +135,19 @@ function app() {
             const textOnlyFlags = {};
             const combinedData = [...this.primaryData, ...this.reserveData];
 
-            this.headers.forEach(header => {
+            this.headers.forEach((header, index) => {
                 const values = combinedData.map(d => d[header]).filter(v => v !== null && v !== '' && v !== undefined);
                 
                 if (values.length === 0) {
                     numericalFlags[header] = false; // Default to categorical if empty
                     textOnlyFlags[header] = false;
+                    return;
+                }
+
+                // Special case: First column is always the ID column - treat as categorical
+                if (index === 0) {
+                    numericalFlags[header] = false; // ID columns are never numerical
+                    textOnlyFlags[header] = false; // Keep checkbox enabled for user awareness
                     return;
                 }
 
