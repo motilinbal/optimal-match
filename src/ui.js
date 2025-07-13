@@ -204,8 +204,12 @@ function app() {
             console.log('Headers validated successfully!');
             this.headers = this.primaryHeaders;
             
-            // Initialize selection state - all columns selected by default
-            this.selected = this.headers.reduce((acc, h) => ({...acc, [h]: true}), {});
+            // Initialize selection state - all columns selected by default EXCEPT the first (ID) column
+            this.selected = {};
+            this.headers.forEach((header, index) => {
+                // Deselect the first column (the ID) by default, select all others
+                this.selected[header] = (index !== 0);
+            });
             
             // Run the new, sophisticated auto-detection
             this.detectColumnTypes();
