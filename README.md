@@ -26,7 +26,7 @@ A lightweight, client-side web application for researchers to find optimal repla
 3.  **Find Matches:** Click the "Find Matches" button to start the calculation.
 4.  **View & Export:** The results are displayed in a table, and you can download them as a new CSV file.
 
-For a complete walkthrough, please see the detailed **[User Guide](https://www.google.com/search?q=docs/user-guide.md)**.
+For a complete walkthrough, please see the detailed **[User Guide](docs/user-guide.md)**.
 
 -----
 
