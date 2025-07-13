@@ -83,8 +83,8 @@
                             x-text="header">
                         </span>
                         <label class="toggle-label">
-                            <input type="checkbox" x-model="isCategorical[header]">
-                            Categorical
+                            <input type="checkbox" x-model="isNumerical[header]" :disabled="isTextOnly[header]">
+                            Numerical
                         </label>
                     </div>
                 </template>

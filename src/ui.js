@@ -9,7 +9,8 @@ function app() {
         primaryHeaders: null,
         reserveHeaders: null,
         selected: {}, 
-        isCategorical: {},
+        isNumerical: {}, // Changed from isCategorical - now tracks numerical columns
+        isTextOnly: {}, // To disable checkbox for text-only columns
         isLoading: false, // For the loading indicator
         results: null, // To store the final results
         progressMessage: '', // New state for progress
@@ -27,7 +28,7 @@ function app() {
                 features: this.headers.filter(h => this.selected[h]),
                 isCategorical: this.headers
                     .filter(h => this.selected[h])
-                    .map(h => this.isCategorical[h])
+                    .map(h => !this.isNumerical[h]) // Invert: if not numerical, then categorical
             };
 
             const worker = new Worker('src/worker.js', { type: 'module' });
@@ -129,16 +130,43 @@ function app() {
             });
         },
 
-        isLikelyCategorical(header) {
-            // Smart detection: check the first few rows of the primary data.
-            // If a value is not a number, we assume the column is categorical.
-            for (let i = 0; i < Math.min(5, this.primaryData.length); i++) {
-                const value = this.primaryData[i][header];
-                if (value && isNaN(parseFloat(value))) {
-                    return true;
+        detectColumnTypes() {
+            const numericalFlags = {};
+            const textOnlyFlags = {};
+            const combinedData = [...this.primaryData, ...this.reserveData];
+
+            this.headers.forEach(header => {
+                const values = combinedData.map(d => d[header]).filter(v => v !== null && v !== '' && v !== undefined);
+
+                // Tier 1: Text-based check
+                const hasText = values.some(v => isNaN(parseFloat(v)));
+                if (hasText) {
+                    numericalFlags[header] = false; // Categorical
+                    textOnlyFlags[header] = true; // Disable checkbox - definitely categorical
+                    return;
                 }
-            }
-            return false;
+                
+                textOnlyFlags[header] = false; // Enable checkbox
+
+                // Tier 2: Sequential integer check
+                const uniqueNumbers = [...new Set(values.map(v => parseInt(v, 10)))];
+                if (uniqueNumbers.every(n => Number.isInteger(n))) {
+                    uniqueNumbers.sort((a, b) => a - b);
+                    const isSequential = uniqueNumbers.length > 1 && 
+                                         uniqueNumbers[0] === 1 && 
+                                         uniqueNumbers[uniqueNumbers.length - 1] === uniqueNumbers.length;
+                    if (isSequential) {
+                        numericalFlags[header] = false; // Likely categorical (sequential integers)
+                        return;
+                    }
+                }
+
+                // Tier 3: Default to numerical
+                numericalFlags[header] = true;
+            });
+            
+            this.isNumerical = numericalFlags;
+            this.isTextOnly = textOnlyFlags;
         },
 
         validateHeaders() {
@@ -153,13 +181,11 @@ function app() {
             console.log('Headers validated successfully!');
             this.headers = this.primaryHeaders;
             
-            // Initialize the state for both selections and categorical toggles
-            this.selected = {};
-            this.isCategorical = {};
-            this.headers.forEach(header => {
-                this.selected[header] = true; // Select all by default
-                this.isCategorical[header] = this.isLikelyCategorical(header); // Auto-detect type
-            });
+            // Initialize selection state - all columns selected by default
+            this.selected = this.headers.reduce((acc, h) => ({...acc, [h]: true}), {});
+            
+            // Run the new, sophisticated auto-detection
+            this.detectColumnTypes();
         }
     };
 }
