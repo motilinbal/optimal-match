@@ -137,6 +137,12 @@ function app() {
 
             this.headers.forEach(header => {
                 const values = combinedData.map(d => d[header]).filter(v => v !== null && v !== '' && v !== undefined);
+                
+                if (values.length === 0) {
+                    numericalFlags[header] = false; // Default to categorical if empty
+                    textOnlyFlags[header] = false;
+                    return;
+                }
 
                 // Tier 1: Text-based check
                 const hasText = values.some(v => isNaN(parseFloat(v)));
@@ -148,20 +154,37 @@ function app() {
                 
                 textOnlyFlags[header] = false; // Enable checkbox
 
-                // Tier 2: Sequential integer check
-                const uniqueNumbers = [...new Set(values.map(v => parseInt(v, 10)))];
+                // All values are numeric-like from here
+                const uniqueNumbers = [...new Set(values.map(v => Number(v)))];
+
+                // Tier 2: Perfect Sequential integer check
                 if (uniqueNumbers.every(n => Number.isInteger(n))) {
                     uniqueNumbers.sort((a, b) => a - b);
-                    const isSequential = uniqueNumbers.length > 1 && 
+                    const isPerfectSequence = uniqueNumbers.length > 1 && 
                                          uniqueNumbers[0] === 1 && 
                                          uniqueNumbers[uniqueNumbers.length - 1] === uniqueNumbers.length;
-                    if (isSequential) {
-                        numericalFlags[header] = false; // Likely categorical (sequential integers)
+                    if (isPerfectSequence) {
+                        numericalFlags[header] = false; // Definitely categorical
                         return;
                     }
                 }
 
-                // Tier 3: Default to numerical
+                // Tier 3: Sparse Sequence Heuristic (NEW)
+                const allAreIntegers = uniqueNumbers.every(n => Number.isInteger(n));
+                if (allAreIntegers) {
+                    const min = Math.min(...uniqueNumbers);
+                    const max = Math.max(...uniqueNumbers);
+                    const range = max - min + 1;
+                    const count = uniqueNumbers.length;
+                    const skips = range - count;
+                    
+                    if (skips <= 5) {
+                        numericalFlags[header] = false; // Likely categorical (sparse sequence)
+                        return;
+                    }
+                }
+
+                // Tier 4: Default/Fallback to numerical
                 numericalFlags[header] = true;
             });
             
